@@ -9,6 +9,7 @@ Website dùng cho bài kiểm tra thực hành DevOps.
 - Jenkins
 - CI/CD
 - Telegram
+- CI/CD webhook test
 
 ## Run project
 
