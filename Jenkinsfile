@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        TELEGRAM_TOKEN = credentials('telegram-bot-token')
+        TELEGRAM_CHAT_ID = credentials('telegram-chat-id')
+    }
+
     stages {
 
         stage('Checkout') {
@@ -26,7 +31,14 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo '=== DEPLOY WEBSITE ==='
+
+                echo '=== DEPLOY STARTED ==='
+
+                bat '''
+                    powershell -Command "$message = '🚀 DEPLOY STARTED`n`nProject: devops-test`nBranch: main'; Invoke-RestMethod -Uri ('https://api.telegram.org/bot' + $env:TELEGRAM_TOKEN + '/sendMessage') -Method Post -Body @{chat_id=$env:TELEGRAM_CHAT_ID; text=$message}"
+                '''
+
+                echo '=== COPYING WEBSITE ==='
 
                 bat '''
                     if not exist D:\\DevOps-Deploy mkdir D:\\DevOps-Deploy
@@ -35,23 +47,23 @@ pipeline {
                 '''
 
                 echo '=== DEPLOY SUCCESS ==='
-                echo 'Website: http://localhost:8081'
+
+                bat '''
+                    powershell -Command "$message = '✅ DEPLOY SUCCESS`n`nProject: devops-test`nBranch: main`nURL: http://localhost:8081'; Invoke-RestMethod -Uri ('https://api.telegram.org/bot' + $env:TELEGRAM_TOKEN + '/sendMessage') -Method Post -Body @{chat_id=$env:TELEGRAM_CHAT_ID; text=$message}"
+                '''
             }
         }
     }
 
     post {
-        success {
-            echo '======================================'
-            echo 'BUILD SUCCESS'
-            echo 'Website: http://localhost:8081'
-            echo '======================================'
-        }
 
         failure {
-            echo '======================================'
-            echo 'BUILD FAILED'
-            echo '======================================'
+            echo '=== DEPLOY FAILED ==='
+
+            bat '''
+                powershell -Command "$message = '❌ DEPLOY FAILED`n`nProject: devops-test`nBranch: main'; Invoke-RestMethod -Uri ('https://api.telegram.org/bot' + $env:TELEGRAM_TOKEN + '/sendMessage') -Method Post -Body @{chat_id=$env:TELEGRAM_CHAT_ID; text=$message}"
+            '''
         }
+
     }
 }
